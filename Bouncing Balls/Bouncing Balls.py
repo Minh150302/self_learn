@@ -61,6 +61,14 @@ def draw_gameover_screen(window):
     window.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 + sub.get_height()))
     pygame.display.flip()
 
+pygame.init()
+pygame.mixer.init()
+bounce_sound = pygame.mixer.Sound("Bouncing Balls\sound\pop-1.mp3")
+
+
+
+
+
 
 pygame.init()
 WIDTH = 600
@@ -130,6 +138,8 @@ while running:
                 if dist + BALL_RADIUS > CIRCLE_RADIUS:
                     if is_ball_in_arc(ball.position, CIRCLE_CENTER, start_angle, end_angle):
                         ball.is_in = False
+                    else: 
+                        bounce_sound.play()
                     if ball.is_in:
                         d = ball.position - CIRCLE_CENTER
                         d_unit = d/np.linalg.norm(d)
