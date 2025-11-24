@@ -3,6 +3,12 @@ import numpy as np
 import math
 import random
 
+STATE_START = 0
+STATE_PLAYING = 1
+STATE_GAMEOVER = 2
+game_state = STATE_START
+
+
 
 class Ball:
     def __init__(self, position, velocity):
@@ -37,6 +43,23 @@ def draw_arc(window, center, radius, start_angle, end_angle):
     p2 = center + (radius + 1000) * np.array([math.cos(end_angle), math.sin(end_angle)])
     pygame.draw.polygon(window, BLACK, [center, p1, p2], 0)
 
+def draw_start_screen(window):
+    window.fill(BLACK)
+    font = pygame.font.SysFont(None, 48)
+    title = font.render("Bounce Balls", True, ORANGE)
+    sub = pygame.font.SysFont(None, 36).render("Press SPACE to Start", True, ORANGE)
+    window.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//2 - title.get_height()))
+    window.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 + sub.get_height()))
+    pygame.display.flip()
+
+def draw_gameover_screen(window):
+    window.fill(BLACK)
+    font = pygame.font.SysFont(None, 48)
+    title = font.render("Game Over", True, RED)
+    sub = pygame.font.SysFont(None, 36).render("Press R to Restart", True, RED)
+    window.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//2 - title.get_height()))
+    window.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 + sub.get_height()))
+    pygame.display.flip()
 
 
 pygame.init()
@@ -58,6 +81,7 @@ end_angle = math.radians(arc_degrees/2)
 spinning_speed = 0.01
 balls = [Ball(ball_pos, ball_vel)]
 
+MAX_BALLS = 50
 
 running = True
 GRAVITY = 0.2
@@ -69,38 +93,61 @@ while running:
         if event.type == pygame.QUIT:
             running = False
             
-    start_angle += spinning_speed
-    end_angle += spinning_speed
-    for ball in balls:
-        if ball.position[1] > HEIGHT or ball.position[0] < 0 or ball.position[0] > WIDTH or ball.position[1] < 0:
-            balls.remove(ball)
-            balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
-            balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
+        if game_state == STATE_START:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                game_state = STATE_PLAYING
 
-        ball.velocity[1] += GRAVITY 
-        ball.position += ball.velocity 
+        if game_state == STATE_GAMEOVER:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                game_state = STATE_START
+                balls = [Ball(ball_pos, ball_vel)]
+                start_angle = math.radians(-arc_degrees/2)
+                end_angle = math.radians(arc_degrees/2)
 
-        dist = np.linalg.norm(ball.position - CIRCLE_CENTER)
-        if dist + BALL_RADIUS > CIRCLE_RADIUS:
-            if is_ball_in_arc(ball.position, CIRCLE_CENTER, start_angle, end_angle):
-                ball.is_in = False
-            if ball.is_in:
-                d = ball.position - CIRCLE_CENTER
-                d_unit = d/np.linalg.norm(d)
-                ball.position = CIRCLE_CENTER + (CIRCLE_RADIUS - BALL_RADIUS) * d_unit
-                
-                t = np.array([-d[1],d[0]], dtype = np.float64)
-                proj_v_t = (np.dot(ball.velocity, t)/np.dot(t,t)) * t
-                ball.velocity = 2* proj_v_t - ball.velocity
-                ball.velocity += t * spinning_speed
-    
-    window.fill(BLACK)
-    pygame.draw.circle(window, ORANGE, CIRCLE_CENTER, CIRCLE_RADIUS, 3)
-    draw_arc(window, CIRCLE_CENTER, CIRCLE_RADIUS, start_angle, end_angle)
-    for ball in balls:
-        pygame.draw.circle(window, ball.color, ball.position, BALL_RADIUS )
-    
-    pygame.display.flip()
+    if game_state == STATE_START:
+        draw_start_screen(window)
+        continue
+
+    if game_state == STATE_GAMEOVER:
+        draw_gameover_screen(window)
+        continue
+    if game_state == STATE_PLAYING:
+        if len(balls) > MAX_BALLS:
+            game_state = STATE_GAMEOVER
+        else:
+            start_angle += spinning_speed
+            end_angle += spinning_speed
+            for ball in balls:
+                if ball.position[1] > HEIGHT or ball.position[0] < 0 or ball.position[0] > WIDTH or ball.position[1] < 0:
+                    balls.remove(ball)
+                    balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
+                    balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
+
+                ball.velocity[1] += GRAVITY 
+                ball.position += ball.velocity 
+
+                dist = np.linalg.norm(ball.position - CIRCLE_CENTER)
+                if dist + BALL_RADIUS > CIRCLE_RADIUS:
+                    if is_ball_in_arc(ball.position, CIRCLE_CENTER, start_angle, end_angle):
+                        ball.is_in = False
+                    if ball.is_in:
+                        d = ball.position - CIRCLE_CENTER
+                        d_unit = d/np.linalg.norm(d)
+                        ball.position = CIRCLE_CENTER + (CIRCLE_RADIUS - BALL_RADIUS) * d_unit
+                        
+                        t = np.array([-d[1],d[0]], dtype = np.float64)
+                        proj_v_t = (np.dot(ball.velocity, t)/np.dot(t,t)) * t
+                        ball.velocity = 2* proj_v_t - ball.velocity
+                        ball.velocity += t * spinning_speed
+            
+            window.fill(BLACK)
+            pygame.draw.circle(window, ORANGE, CIRCLE_CENTER, CIRCLE_RADIUS, 3)
+            draw_arc(window, CIRCLE_CENTER, CIRCLE_RADIUS, start_angle, end_angle)
+            for ball in balls:
+                pygame.draw.circle(window, ball.color, ball.position, BALL_RADIUS )
+            
+            pygame.display.flip()
+
     clock.tick(60)
 
 pygame.quit()
