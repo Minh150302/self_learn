@@ -61,6 +61,28 @@ def draw_gameover_screen(window):
     window.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 + sub.get_height()))
     pygame.display.flip()
 
+def resolve_collision(ball1, ball2):
+    delta = ball1.position - ball2.position
+    dist = np.linalg.norm(delta)
+
+    if dist == 0:
+        return
+    
+    if dist < 2 * BALL_RADIUS:
+        print("Collision detected")
+
+        normal = delta / dist
+
+        v1 = np.dot(ball1.velocity, normal)
+        v2 = np.dot(ball2.velocity, normal)
+
+        ball1.velocity += (v2 - v1) * normal
+        ball2.velocity += (v1 - v2) * normal
+
+        overlap = 2 * BALL_RADIUS - dist
+        ball1.position += normal * (overlap / 2)
+        ball2.position -= normal * (overlap / 2)
+
 pygame.init()
 pygame.mixer.init()
 bounce_sound = pygame.mixer.Sound("Bouncing Balls\sound\pop-1.mp3")
@@ -125,6 +147,10 @@ while running:
         else:
             start_angle += spinning_speed
             end_angle += spinning_speed
+
+            for i in range(len(balls)):
+                for j in range(i+1, len(balls)):
+                    resolve_collision(balls[i], balls[j])
             for ball in balls:
                 if ball.position[1] > HEIGHT or ball.position[0] < 0 or ball.position[0] > WIDTH or ball.position[1] < 0:
                     balls.remove(ball)

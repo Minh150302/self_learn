@@ -1,2 +1,6 @@
 v1.2: 
-update Start screen + End screen
+update Start screen + End screen + sound effect
+
+
+Plan: 
+collision balls
