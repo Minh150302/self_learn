@@ -2,5 +2,7 @@ v1.2:
 update Start screen + End screen + sound effect
 
 
-Plan: 
-collision balls
+v1.3: 
+collision balls + add physics for energy reserve
+
+

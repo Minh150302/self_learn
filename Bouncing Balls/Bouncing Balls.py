@@ -69,9 +69,9 @@ def resolve_collision(ball1, ball2):
         return
     
     if dist < 2 * BALL_RADIUS:
-        print("Collision detected")
-        print("Ball1 Pos:", ball1.position, "Vel:", ball1.velocity)
-        print("Ball2 Pos:", ball2.position, "Vel:", ball2.velocity)
+        # print("Collision detected")
+        # print("Ball1 Pos:", ball1.position, "Vel:", ball1.velocity)
+        # print("Ball2 Pos:", ball2.position, "Vel:", ball2.velocity)
 
         normal = delta / dist
 
@@ -111,14 +111,14 @@ CIRCLE_RADIUS = WIDTH/3
 BALL_RADIUS = 5
 ball_pos = np.array([WIDTH/2, HEIGHT/2 - HEIGHT/6], dtype = np.float64)
 ball_vel = np.array([0, 0],dtype=np.float64)
-arc_degrees = 0
+arc_degrees = 60
 start_angle = math.radians(-arc_degrees/2)
 end_angle = math.radians(arc_degrees/2)
 spinning_speed = 0.01
 friction = 0.1
-loss_energy = 0.8
+loss_energy = 0.95
 
-balls = [Ball(ball_pos, ball_vel),Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)])]
+balls = [Ball(ball_pos, ball_vel)]
 
 
 
@@ -164,10 +164,10 @@ while running:
                 for j in range(i+1, len(balls)):
                     resolve_collision(balls[i], balls[j])
             for ball in balls:
-                # if ball.position[1] > HEIGHT or ball.position[0] < 0 or ball.position[0] > WIDTH or ball.position[1] < 0:
-                #     balls.remove(ball)
-                #     balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
-                #     balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
+                if ball.position[1] > HEIGHT or ball.position[0] < 0 or ball.position[0] > WIDTH or ball.position[1] < 0:
+                    balls.remove(ball)
+                    balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
+                    balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
 
                 ball.velocity[1] += GRAVITY 
                 ball.position += ball.velocity 
