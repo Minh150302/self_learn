@@ -70,8 +70,14 @@ def resolve_collision(ball1, ball2):
     
     if dist < 2 * BALL_RADIUS:
         print("Collision detected")
+        print("Ball1 Pos:", ball1.position, "Vel:", ball1.velocity)
+        print("Ball2 Pos:", ball2.position, "Vel:", ball2.velocity)
 
         normal = delta / dist
+
+        rel_vel = ball1.velocity - ball2.velocity
+        if np.dot(rel_vel, normal) > 0:
+            return
 
         v1 = np.dot(ball1.velocity, normal)
         v2 = np.dot(ball2.velocity, normal)
@@ -79,7 +85,7 @@ def resolve_collision(ball1, ball2):
         ball1.velocity += (v2 - v1) * normal
         ball2.velocity += (v1 - v2) * normal
 
-        overlap = 2 * BALL_RADIUS - dist
+        overlap = 2 * BALL_RADIUS - dist + 0.01
         ball1.position += normal * (overlap / 2)
         ball2.position -= normal * (overlap / 2)
 
@@ -105,11 +111,17 @@ CIRCLE_RADIUS = WIDTH/3
 BALL_RADIUS = 5
 ball_pos = np.array([WIDTH/2, HEIGHT/2 - HEIGHT/6], dtype = np.float64)
 ball_vel = np.array([0, 0],dtype=np.float64)
-arc_degrees = 60
+arc_degrees = 0
 start_angle = math.radians(-arc_degrees/2)
 end_angle = math.radians(arc_degrees/2)
 spinning_speed = 0.01
-balls = [Ball(ball_pos, ball_vel)]
+friction = 0.1
+loss_energy = 0.8
+
+balls = [Ball(ball_pos, ball_vel),Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)])]
+
+
+
 
 MAX_BALLS = 50
 
@@ -152,10 +164,10 @@ while running:
                 for j in range(i+1, len(balls)):
                     resolve_collision(balls[i], balls[j])
             for ball in balls:
-                if ball.position[1] > HEIGHT or ball.position[0] < 0 or ball.position[0] > WIDTH or ball.position[1] < 0:
-                    balls.remove(ball)
-                    balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
-                    balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
+                # if ball.position[1] > HEIGHT or ball.position[0] < 0 or ball.position[0] > WIDTH or ball.position[1] < 0:
+                #     balls.remove(ball)
+                #     balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
+                #     balls.append(Ball(ball_pos, velocity=[random.uniform(-2,2), random.uniform(-1,1)]))
 
                 ball.velocity[1] += GRAVITY 
                 ball.position += ball.velocity 
@@ -173,8 +185,11 @@ while running:
                         
                         t = np.array([-d[1],d[0]], dtype = np.float64)
                         proj_v_t = (np.dot(ball.velocity, t)/np.dot(t,t)) * t
-                        ball.velocity = 2* proj_v_t - ball.velocity
-                        ball.velocity += t * spinning_speed
+                        ball.velocity = (2* proj_v_t - ball.velocity) * loss_energy
+
+                        # DÒNG NÀY SAI QUÁ 
+                        # ball.velocity += t * spinning_speed
+                        ball.velocity += t * (spinning_speed) * friction
             
             window.fill(BLACK)
             pygame.draw.circle(window, ORANGE, CIRCLE_CENTER, CIRCLE_RADIUS, 3)
