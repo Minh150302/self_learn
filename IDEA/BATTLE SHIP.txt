@@ -1,0 +1,16 @@
+MATRIX 10x10
+
+5 ships : 1x2, 1x3, 1x3, 1x4, 1x5
+
+put ships randomly in beach (10x10 matrix)
+
+for each shot, cost 1 turn
+- however, when it hits ship, next shot not cost turn, (optional)
+
+when ship hits all bullet in their body, it down
+
+WIN CONDITION: 5 ships are down
+
+
+less bullet -> better
+
