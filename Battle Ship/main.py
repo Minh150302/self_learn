@@ -25,16 +25,16 @@ def beach_matrix(rows, cols):
     return matrix
 
 def draw_beach(window, beach):
-    block_width = WIDTH // beach.shape[1]
-    block_height = HEIGHT // beach.shape[0]
+    block_width = broad_width // beach.shape[1]
+    block_height = broad_height // beach.shape[0]
     for i in range(beach.shape[0]):
         for j in range(beach.shape[1]):
             if beach[i][j] == 1:
                 pygame.draw.rect(window, WHITE, (j * block_width, i * block_height, block_width, block_height), 1)
 
 def draw_ships(window, beach, ships):
-    block_width = WIDTH // beach.shape[1]
-    block_height = HEIGHT // beach.shape[0]
+    block_width = broad_width // beach.shape[1]
+    block_height = broad_height // beach.shape[0]
     for ship in ships:
         r, c = ship.position
         for i in range(ship.size):
@@ -72,8 +72,55 @@ def put_ships_randoms(beach, ships):
                     c = col + (i if orientation == 'H' else 0)
                     beach[r][c] = 2  # mark the ship's position on the beach
 
+# map initialization
+
+class Board:
+    def __init__(self, rows, cols, width, height):
+        self.rows = rows
+        self.cols = cols
+        self.width = width
+        self.height = height
+
+        self.cells = np.zeros((rows, cols), dtype=int)      # 0: water, 1: beach, 2: ship
+        self.clicked = np.zeros((rows, cols), dtype=int)    # 0: normal, 1: clicked
+
+        self.block_w = width // cols
+        self.block_h = height // rows
+
+    def randomize_beach(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.cells[i][j] = 1
+
+    def cell_from_mouse(self, pos):
+        x, y = pos
+        col = x // self.block_w
+        row = y // self.block_h
+        return row, col
+
+    def click_cell(self, row, col):
+        self.clicked[row][col] ^= 1   # toggle 0/1
+
+    def draw(self, window):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                # Nếu click → tô xanh lá
+                if self.clicked[i][j] == 1:
+                    if self.cells[i][j] == 2:
+                        pygame.draw.rect(window, RED,
+                            (j*self.block_w, i*self.block_h, self.block_w, self.block_h))
+                    else:
+                        pygame.draw.rect(window, BLACK,
+                            (j*self.block_w, i*self.block_h, self.block_w, self.block_h))
+                else:
+                    pygame.draw.rect(window, WHITE,
+                        (j*self.block_w, i*self.block_h, self.block_w, self.block_h), 1)
+
+
+
+
 pygame.init()
-WIDTH, HEIGHT = 600, 600
+WIDTH, HEIGHT = 800, 600
 clock = pygame.time.Clock()
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -92,25 +139,50 @@ GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
+broad_height = HEIGHT
+broad_width = HEIGHT 
+
+board = Board(10, 10, HEIGHT, HEIGHT)
+board.randomize_beach()
 
 while True:
+    # for event in pygame.event.get():
+    #     if event.type == pygame.QUIT:
+    #         pygame.quit()
+    #         exit()
+    #     if event.type == pygame.KEYDOWN:
+    #         if event.key == pygame.K_r:
+    #             BEACH = beach_matrix(ROW, COL)
+    #             for ship in ships:
+    #                 ship.placed = False
+
+    # window.fill(BLUE)
+    # draw_beach(window, BEACH)
+    # for ship in ships:
+    #     if not ship.placed:
+    #         put_ships_randoms(BEACH, [ship])
+    #     draw_ships(window, BEACH, ships)
+
+    # pygame.display.flip()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.quit()
             exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_r:
-                BEACH = beach_matrix(ROW, COL)
-                for ship in ships:
-                    ship.placed = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            r, c = board.cell_from_mouse(pygame.mouse.get_pos())
+            board.click_cell(r, c)
 
     window.fill(BLUE)
-    draw_beach(window, BEACH)
+    board.draw(window)
+
     for ship in ships:
         if not ship.placed:
             put_ships_randoms(BEACH, [ship])
         draw_ships(window, BEACH, ships)
 
     pygame.display.flip()
+
+
 
     clock.tick(60)
