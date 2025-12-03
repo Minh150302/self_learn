@@ -7,11 +7,17 @@ class Ship:
         self.size = size
         self.orientation = orientation
         self.position = position
-        self.hits = 0
+        # self.hits = 0
         self.placed = placed
 
-    def is_sunk(self):
-        return self.hits >= self.size
+    def is_sunk(self,broad):
+        r0, c0 = self.position
+        for i in range(self.size):
+            rr = r0 + (i if self.orientation == 'V' else 0)
+            cc = c0 + (i if self.orientation == 'H' else 0)
+            if broad.clicked[rr][cc] == 0:
+                return False
+        return True
     
     def contains(self, row, col):
         r0, c0 = self.position
@@ -161,7 +167,7 @@ GRID_SIZE = HEIGHT
 font_big = pygame.font.SysFont(None, 72)
 font_small = pygame.font.SysFont(None, 40)
 
-# ===================== MAIN LOOP =====================
+# ===================== INIT =====================
 
 STATE_START = 0
 STATE_PLAYING = 1
@@ -206,8 +212,8 @@ while True:
                     if BOARD.cells[r][c] == 2:
                         for ship in ships:
                             if ship.contains(r, c):
-                                ship.hits += 1
-                                if ship.is_sunk() and ship not in sunk_ships:
+                                # ship.hits += 1
+                                if ship.is_sunk(BOARD) and ship not in sunk_ships:
                                     sunk_ships.append(ship)
                                 break
 
@@ -224,9 +230,11 @@ while True:
 
     elif state == STATE_END:
         text = font_big.render("YOU WIN!", True, WHITE)
-        sub = font_small.render(f"Shots taken: {shots}. Click to Restart", True, WHITE)
+        sub = font_small.render(f"Shots taken: {shots}", True, WHITE)
+        retry = font_small.render("Click to Play Again", True, WHITE)
         window.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//2 - 100))
         window.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 + 20))
+        window.blit(retry, (WIDTH//2 - retry.get_width()//2, HEIGHT//2 + 70))
 
     elif state == STATE_PLAYING:
         BOARD.draw(window)
