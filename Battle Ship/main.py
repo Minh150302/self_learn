@@ -22,7 +22,7 @@ class Ship:
                 return True
         return False
     
-    def get_outline_cells(self):
+    # def get_outline_cells(self):
         r0, c0 = self.position
         cells = []
 
@@ -108,6 +108,8 @@ class Board:
     def click_cell(self, row, col):
         if self.clicked[row][col] == 0:
             self.clicked[row][col] = 1
+            shots_fired = True
+            return shots_fired
 
     def draw(self, window):
         for r in range(self.rows):
@@ -140,6 +142,8 @@ class Board:
         rect = (x - padding, y - padding, w + padding*2, h + padding*2)
         pygame.draw.rect(window, (255, 255, 0), rect, 3)
 
+# ===================== GAME STATES =====================
+
 pygame.init()
 WIDTH, HEIGHT = 800, 600
 window = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -153,12 +157,31 @@ RED   = (255,0,0)
 
 ROWS = COLS = 10
 GRID_SIZE = HEIGHT
-BOARD = Board(ROWS, COLS, GRID_SIZE, GRID_SIZE)
-BOARD.randomize_beach()
 
-ships = [Ship(2), Ship(3), Ship(3), Ship(4), Ship(5)]
-put_ships_randoms(BOARD, ships)
-sunk_ships = []
+font_big = pygame.font.SysFont(None, 72)
+font_small = pygame.font.SysFont(None, 40)
+
+# ===================== MAIN LOOP =====================
+
+STATE_START = 0
+STATE_PLAYING = 1
+STATE_END = 2
+
+state = STATE_START
+shots = 0
+
+def reset_game():
+    global BOARD, ships, sunk_ships, shots
+    BOARD = Board(ROWS, COLS, GRID_SIZE, GRID_SIZE)
+    BOARD.randomize_beach()
+    ships = [Ship(2), Ship(3), Ship(3), Ship(4), Ship(5)]
+    put_ships_randoms(BOARD, ships)
+    sunk_ships = []
+    shots = 0
+
+reset_game()
+
+# ===================== MAIN LOOP =====================
 
 while True:
     for event in pygame.event.get():
@@ -166,22 +189,54 @@ while True:
             exit()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            r, c = BOARD.cell_from_mouse(pygame.mouse.get_pos())
-            BOARD.click_cell(r, c)
+            if state == STATE_START:
+                state = STATE_PLAYING
 
-            if BOARD.cells[r][c] == 2:
-                for ship in ships:
-                    if ship.contains(r, c):
-                        ship.hits += 1
-                        if ship.is_sunk() and ship not in sunk_ships:
-                            sunk_ships.append(ship)
-                        break
+            elif state == STATE_END:
+                reset_game()
+                state = STATE_PLAYING
+
+            elif state == STATE_PLAYING:
+                r, c = BOARD.cell_from_mouse(pygame.mouse.get_pos())
+                
+                if 0 <= r < ROWS and 0 <= c < COLS:
+                    if BOARD.click_cell(r, c):
+                        shots += 1
+
+                    if BOARD.cells[r][c] == 2:
+                        for ship in ships:
+                            if ship.contains(r, c):
+                                ship.hits += 1
+                                if ship.is_sunk() and ship not in sunk_ships:
+                                    sunk_ships.append(ship)
+                                break
+
+                if len(sunk_ships) == len(ships):
+                    state = STATE_END
 
     window.fill(BLUE)
-    BOARD.draw(window)
-    for ship in sunk_ships:
-        BOARD.draw_ship_outline(window, ship)
 
-    text_sunk_ships(window, sunk_ships, GRID_SIZE + 10, 20)
+    if state == STATE_START:
+        text = font_big.render("BATTLE SHIP", True, WHITE)
+        sub = font_small.render("Click to Start", True, WHITE)
+        window.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//2 - 100))
+        window.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 + 20))
+
+    elif state == STATE_END:
+        text = font_big.render("YOU WIN!", True, WHITE)
+        sub = font_small.render(f"Shots taken: {shots}. Click to Restart", True, WHITE)
+        window.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//2 - 100))
+        window.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 + 20))
+
+    elif state == STATE_PLAYING:
+        BOARD.draw(window)
+
+        for ship in sunk_ships:
+            BOARD.draw_ship_outline(window, ship)
+
+        text_sunk_ships(window, sunk_ships, GRID_SIZE + 10, 20)
+        shot_txt = font_small.render(f"Shots: {shots}", True, WHITE)
+        window.blit(shot_txt, (GRID_SIZE + 10, HEIGHT - 40))
+
     pygame.display.flip()
     clock.tick(60)
