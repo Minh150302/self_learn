@@ -48,6 +48,7 @@ class Tetromino:
                 if shape_matrix[r][c] == 1:
                     rect = ( (c0 + c) * block_size, (r0 + r) * block_size, block_size, block_size)
                     pygame.draw.rect(surface, self.get_color(), rect)
+                    pygame.draw.rect(surface, WHITE, rect, 1)
 
 class board:
     # Define the Tetris board and its methods
@@ -57,11 +58,13 @@ class board:
         self.cells = np.zeros((rows, cols), dtype=int)
 
     def draw(self, surface):
-        block_h = surface.get_height() // self.rows
-        block_w = block_h
+        # block_h = surface.get_height() // self.rows
+        # block_w = block_h
+
+        block = window_broad // 10
         for r in range(self.rows):
             for c in range(self.cols):
-                rect = (c*block_w, r*block_h, block_w, block_h)
+                rect = (c*block, r*block, block, block)
                 if self.cells[r][c] == 0:
                     pygame.draw.rect(surface, WHITE, rect, 1)
                 else:
@@ -90,6 +93,7 @@ def add_new_tetromino(board):
 
 pygame.init()
 WIDTH, HEIGHT = 800, 600
+window_broad = WIDTH - 400
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Tetris")
 clock = pygame.time.Clock()
@@ -137,7 +141,7 @@ while True:
     window.fill(BLACK)
 
     board.draw(window)
-    shape.draw(window, WIDTH // board.cols)
+    shape.draw(window, window_broad // 10)
 
     pygame.display.flip()
     clock.tick(60)
